@@ -8,7 +8,7 @@ served the same files from this branch.
 |                 |                                                                                 |
 | --------------- | ------------------------------------------------------------------------------- |
 | Swarm stack     | `aboutbart`                                                                      |
-| Services        | `aboutbart_web` ×2 (nginx), `aboutbart_cloudflared` ×1                           |
+| Services        | `aboutbart_web` ×2 (nginx), `aboutbart_cloudflared` ×2                           |
 | Images          | `ghcr.io/bartkelchtermans/aboutbart:sha-<commit>`, `cloudflare/cloudflared:latest`   |
 | Source of truth | `deploy/swarm/compose.yaml` on `master`, deployed by Arcane Git Sync              |
 | Ingress         | Cloudflare Tunnel `aboutbart` — `aboutbart.com` + `www.aboutbart.com`, no published ports |
@@ -81,7 +81,7 @@ Create it only after the first CI run has pinned a real sha — the compose ship
 ### 5. Verify, then retire GitHub Pages
 
 ```sh
-docker service ls --filter name=aboutbart          # aboutbart_web 2/2, aboutbart_cloudflared 1/1
+docker service ls --filter name=aboutbart          # aboutbart_web 2/2, aboutbart_cloudflared 2/2
 curl -sI https://aboutbart.com/                    # 200
 curl -sI https://aboutbart.com/f14                 # 200 — extensionless link resolves
 curl -sI https://www.aboutbart.com/                # 200
