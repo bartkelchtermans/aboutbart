@@ -30,7 +30,7 @@ services:
   web:
     # Rewritten by CI to :sha-<commit> — see the header. `sha-unpinned`
     # does not exist on purpose: nothing deploys until the first CI bump.
-    image: ghcr.io/bartkelchtermans/aboutbart:sha-f463a16b9e307b05841a8da0da25a3f9eb50d353
+    image: ghcr.io/bartkelchtermans/aboutbart:sha-35e1a058175d63106f47d21278345d33bd67ae32
     networks: [internal]
     # Stateless nginx serving baked-in files: scale freely. Healthcheck is
     # in the image, so start-first gates the rollout on real health.
