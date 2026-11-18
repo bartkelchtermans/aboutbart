@@ -7,7 +7,7 @@ repository is what is served.
 
 Pushing to `master` deploys the site. It runs on a Docker Swarm cluster behind a
 Cloudflare Tunnel, not on GitHub Pages: CI builds an nginx image, pins its tag into
-`deploy/swarm/compose.yaml`, and Arcane picks that commit up and redeploys.
+`deploy/production/compose.yaml`, and Arcane picks that commit up and redeploys.
 
 Full procedure, one-time setup and rollback: **[`deploy/README.md`](deploy/README.md)**.
 

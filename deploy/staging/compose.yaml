@@ -1,18 +1,18 @@
-# Docker Swarm stack "aboutbart" — aboutbart.com on the 3-Pi cluster.
+# Docker Swarm stack "aboutbart-staging" — staging.aboutbart.com on the 3-Pi staging swarm.
 #
 # Deployed by Arcane's Git Sync (swarm mode), pointed at this file on master.
 # Git Sync is the only writer to this stack: deploy only what `master` says,
 # and roll back with `git revert` of the pin commit plus Arcane's next sync.
+# Staging and production run the same commit: deploy/staging/compose.yaml and
+# deploy/production/compose.yaml are pinned together.
 #
 # Prereq — one external Swarm secret, created once on a manager (deploy/README.md):
-#   aboutbart_cloudflared   Cloudflare Tunnel token (remotely-managed)
+#   staging_aboutbart_cloudflared   Cloudflare Tunnel token (remotely-managed)
 #
 # Ingress is the stack's OWN Cloudflare Tunnel: cloudflared dials out to the
-# edge, so nothing publishes a port. It reaches nginx at http://web:80 over the
-# `internal` overlay — the service VIP follows rescheduling, so cloudflared
-# never learns a node IP. The tunnel is remotely managed: the token identifies
-# it, and the public hostnames (aboutbart.com + www -> http://web:80) live in
-# the Zero Trust dashboard, not here.
+# edge, so nothing publishes a port. The tunnel is remotely managed: the token
+# identifies it, and the public hostname (staging.aboutbart.com) and its origin live in the
+# Zero Trust dashboard, not here.
 #
 # The `image:` line is written by CI (.github/workflows/build.yml): every green
 # build of master pins `:sha-<commit>` here and commits. The tag in git is the
@@ -23,7 +23,7 @@ networks:
     driver: overlay
 
 secrets:
-  aboutbart_cloudflared:
+  staging_aboutbart_cloudflared:
     external: true
 
 services:
@@ -64,9 +64,9 @@ services:
       # `tunnel run` honours $TUNNEL_TOKEN_FILE, so the token stays a
       # Swarm secret and never lands in the service spec. (The image is
       # distroless — no shell for an entrypoint shim anyway.)
-      TUNNEL_TOKEN_FILE: /run/secrets/aboutbart_cloudflared
+      TUNNEL_TOKEN_FILE: /run/secrets/staging_aboutbart_cloudflared
     secrets:
-      - aboutbart_cloudflared
+      - staging_aboutbart_cloudflared
     # Every replica registers as a connector on the same tunnel and
     # Cloudflare load-balances across them, so one node dying keeps ingress.
     deploy:

@@ -1,8 +1,7 @@
-# Deploy — aboutbart.com on the Pi swarm
+# Deploy — aboutbart.com on the swarm
 
-`https://aboutbart.com` + `www` — Bart Kelchtermans' portfolio, running on the three-Pi Docker
-Swarm, deployed by Arcane Git Sync from what `master` says, reachable through its own Cloudflare
-Tunnel. `deploy/swarm/compose.yaml` is the single writer. This replaces GitHub Pages, which
+`https://aboutbart.com` + `www` — Bart Kelchtermans' portfolio, running on the production Docker Swarm, deployed by Arcane Git Sync from what `master` says, reachable through its own Cloudflare
+Tunnel. `deploy/production/compose.yaml` is the single writer. This replaces GitHub Pages, which
 served the same files from this branch.
 
 |                 |                                                                                 |
@@ -10,15 +9,32 @@ served the same files from this branch.
 | Swarm stack     | `aboutbart`                                                                      |
 | Services        | `aboutbart_web` ×2 (nginx), `aboutbart_cloudflared` ×2                           |
 | Images          | `ghcr.io/bartkelchtermans/aboutbart:sha-<commit>`, `cloudflare/cloudflared:latest`   |
-| Source of truth | `deploy/swarm/compose.yaml` on `master`, deployed by Arcane Git Sync              |
+| Source of truth | `deploy/production/compose.yaml` on `master`, deployed by Arcane Git Sync              |
 | Ingress         | Cloudflare Tunnel `aboutbart` — `aboutbart.com` + `www.aboutbart.com`, no published ports |
+
+## Environments
+
+Both environments follow `master` and run the same commit: CI pins the two compose files together.
+
+|         | Staging                        | Production                       |
+| ------- | ------------------------------ | -------------------------------- |
+| Site    | `staging.aboutbart.com`                | `aboutbart.com`                          |
+| Cluster | the three-Pi staging swarm     | the production swarm (`role == apps` nodes) |
+| Stack   | `aboutbart-staging`                | `aboutbart`                          |
+| Compose | `deploy/staging/compose.yaml`  | `deploy/production/compose.yaml` |
+| Tunnel  | `aboutbart.com (staging)`              | `aboutbart.com`                          |
+| Secret  | `staging_aboutbart_cloudflared`    | `aboutbart_cloudflared`              |
+
+The table above and the setup steps below describe production. Staging has the same shape with
+the names of this table. A Cloudflare rule sets `X-Robots-Tag: noindex, nofollow` on every
+`staging.*` host, so staging stays out of search.
 
 ## How a change ships
 
 1. Push to `master`.
 2. `.github/workflows/build.yml` builds `Dockerfile` for `linux/amd64,linux/arm64`, pushes
    `ghcr.io/bartkelchtermans/aboutbart:sha-<commit>` to GHCR, then rewrites the `image:` line in
-   `deploy/swarm/compose.yaml` to that tag and commits it (`chore(deploy): swarm → sha-…
+   `deploy/production/compose.yaml` to that tag and commits it (`chore(deploy): staging + production → sha-…
    [skip ci]`).
 3. Arcane's Git Sync stack `aboutbart` polls `master` and redeploys on its next sync (5 min).
    There is no manual deploy command and no direct-deploy script.
@@ -57,7 +73,7 @@ printf '%s' "$CF_TUNNEL_TOKEN" | ssh swarm01 'docker secret create aboutbart_clo
 
 `printf`, not `echo` — cloudflared reads the file raw and a trailing newline invalidates the
 token. Swarm secrets are immutable; to rotate, create a new name (`aboutbart_cloudflared_v2`)
-and change the reference in `deploy/swarm/compose.yaml`.
+and change the reference in `deploy/production/compose.yaml`.
 
 ### 3. Arcane credentials
 
@@ -70,7 +86,7 @@ and change the reference in `deploy/swarm/compose.yaml`.
 
 ### 4. Arcane Git Sync stack `aboutbart`
 
-Swarm mode, `deploy/swarm/compose.yaml` on `master`, `autoSync` with a 5-minute interval, and
+Swarm mode, `deploy/production/compose.yaml` on `master`, `autoSync` with a 5-minute interval, and
 **`redeployAfterSync: true`** — without it a synced compose change only updates the stored
 definition and never rolls the service. `projectName` must be exactly `aboutbart`: adoption of a
 running stack happens on an exact name match, and a near-miss deploys a second complete copy.
